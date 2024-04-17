@@ -1,0 +1,136 @@
+---
+title: "Q2"
+output:
+  pdf_document: default
+  word_document: default
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, comment = "",kill_prefix=list(comment=NA, null_prefix=TRUE))
+```
+
+##  Question 2
+ Import this Google sheet in R/Python and for each of the parameters (P1 to P10)
+ perform a t-test and ANOVA. Share the link of your results and the script.\
+ 
+## installing packages required for the operations performed\
+### googlesheets4 is used for read the data from google sheets\
+### tidyverse is usedl to redhaping the data from wide to long\
+### dplyr is used for data manipulations\
+### tinytex is used for get the output in pdf format\
+### knitr is used for output format and styles\
+### rmarkdown is used for create and genarate rmarkdown files
+\
+```{r packs}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(googlesheets4)
+library(rmarkdown)
+library(knitr)
+library(tinytex)
+```
+\newpage
+## To read the data from google sheets and printing the raw data 
+\
+```{r data, null_prefix=T}
+df <-read_sheet("https://docs.google.com/spreadsheets/d/1ndg1XMmiTsMLITNCPTapVX6Uid6H99mctIC--6DPM2Q/edit#gid=0")
+
+print.data.frame(df)
+```
+\newpage
+### To transform the data from wide to long to arrange the data to perform ttest  
+\
+```{r reshape}
+ldf <- as.data.frame(df %>% gather("Group A -Sample1", "Group A -Sample2", "Group A -Sample3",
+                                   "Group B -Sample1", "Group B -Sample2", "Group B -Sample3",
+                                   "Group B-Sample4",  "Group C-Sample1",  "Group C-Sample2",
+                                   "Group C-Sample3", key=cat, value=conc))
+
+ldf$Parameter <- as.factor(ldf$Parameter)
+ldf$group <-as.factor(substr(ldf$cat, 7,7))
+ldf$sample <-as.numeric(gsub("\\D", "", ldf$cat))
+ldf$id <- paste(ldf$Parameter,ldf$group, sep = "_")
+```
+\
+### To calcualte the count, mean and sd for each parameter by group wise  
+\
+```{r descriptives}
+ls <-ldf %>%  group_by(Parameter,group) %>%
+  summarise(n = n(), avg = mean(conc), sd = sd(conc))
+
+print.data.frame(ls)
+```
+\
+### data subsetting for each group individually  
+\
+```{r subset,null_prefix=T}
+ldf_a <- ldf[ldf$group=="A",]
+ldf_b <- ldf[ldf$group=="B",]
+ldf_c <- ldf[ldf$group=="C",]
+```
+\newpage
+### Applying ttest for each parameter different combination A vs B, A vs C and B vs C  
+\
+```{r ttest}
+for(i in levels(ldf$Parameter)){
+  str<- as.character(i)
+  
+  cat("Two sample T-test for A vs B for: ", i, "\n")
+  
+  print(t.test(ldf_a[ldf_a$Parameter==str, "conc"], ldf_b[ldf_b$Parameter==str,"conc"], 
+         alternative = "two.sided", var.equal = FALSE))
+  cat(rep("_", 70))
+  writeLines("\n")
+  
+  cat("Two sample T-test for A vs C for: ", i, "\n")
+  
+  print(t.test(ldf_a[ldf_a$Parameter==str, "conc"], ldf_c[ldf_c$Parameter==str,"conc"], 
+              alternative = "two.sided", var.equal = FALSE))
+  cat(rep("_", 70))
+  writeLines("\n")
+  
+  cat("Two sample T-test for B vs C for: ", i, "\n")
+  print(t.test(ldf_b[ldf_b$Parameter==str, "conc"], ldf_c[ldf_c$Parameter==str,"conc"], 
+               alternative = "two.sided", var.equal = FALSE))
+  cat(rep("_", 70), "\n" )
+  writeLines("\n")
+}
+
+```
+\newpage
+# ANOVA for each Parameter
+
+##In the ANOVA tables the significance of the ANOVA model was specified as following\
+
+### Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1\
+
+###‘***’ means statistically significant at 0% level of significance\
+
+###‘**’ means statistically significant at 0.001% level of significance\
+
+###‘*’ means statistically significant at 1% level of significance\
+
+###‘*’ means statistically significant at 5% level of significance\
+
+###‘.’ means statistically significant at 10% level of significance\
+
+###‘ ’ means statistically significant at 100% level of significance(there was no statistical significance)  
+\
+```{r ANOVA}
+for(i in levels(ldf$Parameter)){
+  par <- i
+  cat("ANOVA for: ", i, "\n")
+  m <- aov(conc~group, ldf[ldf$Parameter==par, ])
+  print(summary(m))
+  cat(rep("_", 70), "\n")
+  writeLines("\n")
+}
+```
+
+
+xelatex("q2.Rmd")
+```{r output, echo=F}
+
+```
