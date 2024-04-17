@@ -12,7 +12,7 @@ output:
 ##The following table represents a simplified example of raw data from a pseudovirus neutralization assay,measuring luminescence(indicative of virus entry) in response to increasing concentrations of a neutralizing antibody.Each measurement is the average luminescence from duplicate wells.
 \
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, comment = "",kill_prefix=list(comment=NA, null_prefix=TRUE))
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, comment = "")
 ```
  installing packages required for the operations performed\
  ggplot2 is used for visualization of the  data \
@@ -29,6 +29,7 @@ library(knitr)
 library(rmarkdown)
 library(tinytex)
 library(ggpmisc)
+library(lmtest)
 ```
 \
 Virus control(V):Wells containing virus and cells but no anti body.This serves as the maximum infection control.
@@ -118,6 +119,8 @@ From the above plot, the curve says that the inhibition increases rapidly at low
 3.	Normality of Residuals: The residuals should follow a normal distribution. This means that when you plot the residuals (the differences between observed and predicted Y values) against the predicted Y values, the distribution of residuals should approximate a bell-shaped curve.
 
 4.	Independence of Errors: The errors (residuals) should be independent of each other. There should be no pattern or correlation in the residuals when plotted against the independent variable or any other variable.
+
+5.	Homoscedasticity (Constant Variance): The variance of the residuals (the differences between the observed and predicted values of Y) should be constant across all levels of X. This means that the spread of the residuals should be consistent throughout the range of X.
 \
 ```{r model1}
 reg1 <- lm(Luminescence~conc, data)
@@ -160,9 +163,31 @@ ggplot(data, aes(x = sqrt(conc), y = log(Luminescence))) +
     y = "Luminescence",
   )
 
+plot(reg3)
+
 ```
 
+# BP test for testing homoscedasticity
+\
+Bp test was showed homoscedasticity of residual variances(Pvalue: 0.9503 (>0.05)) variance was constant among residuals.
+
+```{r BP_test}
+bptest(reg3)
+```
+\
+Shapiro wilk test for normality of residuals.
+
+Residuals follows the normality(pvalue: 0.1386(>0.05))
+\
+```{r SW_test}
+shapiro.test(reg3$residuals)
+```
+\
+#Interpretation:
+
 From the above three models, model 3 performs well(adjusted r square value:0.95); the concentrations are transformed into its square roots, but while transforming into logarithmic, it was generating Na's because of 0 concentrations. The dependent variable, luminescence, was log-transformed.
+
+The diagnostic plots for model were 
 
 Hence, from the models, we conclude that the luminescence (indicative of virus entry) decreases while antibody concentrations increase.And antibody concentrations causes to the luminescence (indicative of virus entry) decreases. there was statistical significant negative linear association between the luminescence (indicative of virus entry) and concentrations.
 
