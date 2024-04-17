@@ -1,0 +1,136 @@
+---
+title: "Q7"
+author: "Anil Kumar Ganna"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, comment = "",kill_prefix=list(comment=NA, null_prefix=TRUE))
+```
+## installing packages required for the operations performed\
+### ggplot2 is used for visualization of the  data \
+### ggpmisc is usedl to print the regression equation and r2 and adj r2 values in the plot\
+### dplyr is used for data manipulations\
+### tinytex is used for get the output in pdf format\
+### knitr is used for output format and styles\
+### rmarkdown is used for create and genarate rmarkdown files
+\
+```{r packages}
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(rmarkdown)
+library(tinytex)
+library(ggpmisc)
+```
+\
+#Question7
+##Write a brief report containing the analysis and visualization of the following example data generated froma hypothetical pseudovirus neutralizationassay. Analysis and visualization should be consistent with those shown in literature. State your  assumptions and any formulae used in your calulcations.
+
+##The following table represents a simplified example of raw data from a pseudovirus neutralization assay,measuring luminescence(indicative of virus entry) in response to increasing concentrations of a neutralizing antibody.Each measurement is the average luminescence from duplicate wells.
+\
+```{r data}
+data <- data.frame(
+  Antibody_Concentration = format(c(0, 0.01, 0.1, 1, 10, 100), scientific = F),
+  Luminescence = c(120000, 115000, 95000, 60000, 25000, 5000)
+)
+print(data)
+data$conc <- as.numeric(data$Antibody_Concentration)
+virus_control <- 120000
+Cellcontrol <- 500
+```
+\
+Calculation of % Inhibition: Percentage inhibition is calculated using the formula:
+% Inhibition = 100 x (1−(Average luminescence at a given antibody concentration/Average luminescence without antibody)
+\
+```{r Inhibition}
+data$Percent_Inhibition <- (1 - data$Luminescence / virus_control) * 100
+```
+\
+##Printing the data
+\
+```{r dd}
+print(data)
+```
+
+##Bar Plot to Uberstand the average luminescence from duplicatewells for increasing levels of concentration
+From the following bar plot, it is showing that the average luminescence from duplicate wells was decreasing while the increasing concentrations of a neutralizing antibody.
+```{r barplot}
+barplot(data$Luminescence, names.arg=data$Antibody_Concentration, col = "red")
+```
+The data can be visualized using a dose-response curve, where the x-axis represents the concentration of neutralizing antibodies, and the y-axis represents the percentage inhibition of virus entry.
+By examining the shape of the curve and the position of the data points relative to the curve, we can assess the efficacy and potency of the neutralizing antibodies. 
+\
+```{r ds_curve}
+ggplot(data, aes(x = conc, y = Percent_Inhibition, color="blue")) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Dose-Response Curve",
+    x = "Antibody Concentration (μg/mL)",
+    y = "% Inhibition",
+  )
+```
+\
+From the above plot, the curve says that the inhibition increases rapidly at lower antibody concentrations up to a concentration level of 10. At higher concentration levels, the inhibition rate rises slowly and becomes constant. It slowed down after a concentration level of 10 and a higher concentration of 100.
+\
+#Simple regression assumptions
+
+1.	Linearity: The relationship between the independent variable (X) and the dependent variable (Y) is linear. This means that changes in Y are directly proportional to changes in X, and the data points should roughly form a straight line pattern when plotted.
+2.	Independence of Observations: The observations in the dataset are independent of each other. In other words, the value of one data point should not be influenced by the value of another data point.
+3.	Normality of Residuals: The residuals should follow a normal distribution. This means that when you plot the residuals (the differences between observed and predicted Y values) against the predicted Y values, the distribution of residuals should approximate a bell-shaped curve.
+4.	Independence of Errors: The errors (residuals) should be independent of each other. There should be no pattern or correlation in the residuals when plotted against the independent variable or any other variable.
+
+```{r model1}
+reg1 <- lm(Luminescence~conc, data)
+print(summary(reg1))
+ggplot(data, aes(x = conc, y = as.numeric(Luminescence))) +
+  geom_point() + stat_poly_line() +
+  stat_poly_eq(use_label(c("eq", "R2", "adj.R2"))) +
+  labs(
+    title = "Antibody Concentration (μg/mL) vs  Luminescence model1",
+    x = "Antibody Concentration (μg/mL)",
+    y = "Luminescence",
+  )
+
+```
+
+```{r model2}
+reg2 <- lm(log(Luminescence)~conc, data)
+print(summary(reg2))
+ggplot(data, aes(x = conc, y = log(Luminescence))) +
+  geom_point() + stat_poly_line() +
+  stat_poly_eq(use_label(c("eq", "R2", "adj.R2"))) +
+  labs(
+    title = "Antibody Concentration (μg/mL) vs  Luminescence model2",
+    x = "Antibody Concentration (μg/mL)",
+    y = "Luminescence",
+  )
+
+
+```
+
+
+```{r model3}
+reg3 <- lm(log(Luminescence)~sqrt(conc), data)
+print(summary(reg3))
+
+ggplot(data, aes(x = sqrt(conc), y = log(Luminescence))) +
+  geom_point() + stat_poly_line() +
+  stat_poly_eq(use_label(c("eq", "R2", "adj.R2"))) +
+  labs(
+    title = "Antibody Concentration (μg/mL) vs  Luminescence model3",
+    x = "Antibody Concentration (μg/mL)",
+    y = "Luminescence",
+  )
+
+```
+
+From the above three models, model 3 performs well(adjusted r square value:0.95); the concentrations are transformed into its square roots, but while transforming into logarithmic, it was generating NAs because of 0 concentrations. The dependent variable, Luminescence, was log-transformed.
+
+Hence, from the models, we conclude that the Luminescence (indicative of virus entry) decreases while antibody concentrations increase.And antibody concentrations causes to the Luminescence (indicative of virus entry) decreases.
+
+
