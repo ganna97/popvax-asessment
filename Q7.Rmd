@@ -32,6 +32,18 @@ library(ggpmisc)
 
 ##The following table represents a simplified example of raw data from a pseudovirus neutralization assay,measuring luminescence(indicative of virus entry) in response to increasing concentrations of a neutralizing antibody.Each measurement is the average luminescence from duplicate wells.
 \
+Virus control(V):Wells containing virus and cells but no anti body.This serves as the maximum infection control.
+
+Cell control (C): Wells containing cells only, without virus or antibody, to measure background luminescence.
+
+Antibody dilutions: Different concentrations of the antibody being tested are distributed across the plate to assess their neutralizing activity.
+
+Virus contol is 120000
+
+Cell control is 500
+
+Even though the concentration was reached 100 the average average luminescence was not reached to the cell control(500).
+
 ```{r data}
 data <- data.frame(
   Antibody_Concentration = format(c(0, 0.01, 0.1, 1, 10, 100), scientific = F),
